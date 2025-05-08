@@ -1,7 +1,10 @@
 #include <c64.h>
 
-char *const SCREEN = (char *)$400;                // Pointer to screen data
-char *const SPRITE_POINTER_DATA = (char *)$2000;  // Pointer to sprite data
+char *const SCREEN_POINTER = (char *)$0400;                // Pointer to screen data
+char *const SPRITE_POINTER_DATA = (char *)$2800;  // Pointer to sprite data
+char *const CHARSET_POITER = (char *)$2000;
+
+const int MAX_CHARS = 4;
 
 void main() {
   initialize();
@@ -14,10 +17,13 @@ void main() {
 }
 
 void initialize() {
-  clear_screen();
+  *VICII_MEMORY = toD018(SCREEN_POINTER, CHARSET_POITER);
+
+  clearScreen();
 
   VICII->SPRITES_ENABLE = %00000111;
 
+  initChars();
   initSpritesMemory(3);
   writeSpritesData();
 
@@ -37,7 +43,7 @@ void initialize() {
 void initSpritesMemory(int numOfSprites) {
   // addres where we have first pointer to sprite
   // last 8 bytes in screen memory
-  char *spritesPointer = SCREEN + $3f8; // 0x07F8
+  char *spritesPointer = SCREEN_POINTER + $3f8; // 0x07F8
 
   // 1 block is 64 bytes
   char spriteBlockNumber = (char)((unsigned int)SPRITE_POINTER_DATA / $40); // 0x0080
@@ -67,11 +73,55 @@ void writeSpriteData(char* spr, char* spriteData) {
   }
 }
 
-void clear_screen() {
-  for (char *sc = SCREEN; sc < SCREEN + 1000; sc++) {
-    *sc = ' ';
+void clearScreen() {
+  for (char *sc = SCREEN_POINTER; sc < SCREEN_POINTER + 40*25; sc++) {
+    *sc = 3;
   }
 }
+
+void initChars() {
+  for (int i = 0; i < MAX_CHARS*8; i++) {
+    CHARSET_POITER[i] = tiles[i];
+  }
+}
+
+char tiles[MAX_CHARS*8] = {
+  %00000000,
+  %00000000,
+  %00000000,
+  %00000000,
+  %00000000,
+  %00000000,
+  %00000000,
+  %00000000,
+
+  %00000001,
+  %00000001,
+  %00000001,
+  %00000001,
+  %00000001,
+  %00000001,
+  %00000001,
+  %00000001,
+
+  %10000000,
+  %10000000,
+  %10000000,
+  %10000000,
+  %10000000,
+  %10000000,
+  %10000000,
+  %10000000,
+
+  %10000001,
+  %10000001,
+  %10000001,
+  %10000001,
+  %10000001,
+  %10000001,
+  %10000001,
+  %10000001,
+};
 
 char SPRITE_1[64] = {
   0b00000000, 0b00011000, 0b00000000,
