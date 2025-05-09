@@ -7,31 +7,30 @@ const int CHARSET_ADDRESS = $2000;
 const int CHARSET_COLORS_ADDRESS = $3000;
 const int MAP_ADDRESS = $3100;
 
-const int SPRITE_FRAME_DELAY = 13;
-int frameCounter = 0;
+const int SPRITE_FRAME_DELAY = 10;
 
-const char SPRITES_FRAMES_COUNT[] = {6, 2, 2}; 
-char spritesCurrentFrame[] = {0, 0, 0};
+int screenFrameCounter = 0;
+int spritesCurrentFrame[] = {0, 0, 0};
+
+const int SPRITE_1_JUMP_ANIM[2] = {0, 1};
+const int SPRITE_1_WALK_RIGHT_ANIM[2] = {2, 3};
+const int SPRITE_1_WALK_LEFT_ANIM[2] = {4, 5};
+const int SPRITE_1_FULL_ANIM[2] = {0, 5};
 
 void main() {
   initialize();
 
   do {
-    wait_vblank();  // synchronizacja z ramką
+    wait_vblank();
 
-    frameCounter++;
+    screenFrameCounter++;
 
-    if (frameCounter >= SPRITE_FRAME_DELAY) {
-        frameCounter = 0;
+    if (screenFrameCounter >= SPRITE_FRAME_DELAY) {
+        screenFrameCounter = 0;
 
-        spritesCurrentFrame[0] = getNextSpriteFrameBySpriteNumber(0);
-        spritesCurrentFrame[1] = getNextSpriteFrameBySpriteNumber(1);
-        spritesCurrentFrame[2] = getNextSpriteFrameBySpriteNumber(2);
-
-        // TODO: calculate data position by sprite number and frames count
-        updateSpriteFrame(0, spritesCurrentFrame[0], 0);
-        updateSpriteFrame(1, spritesCurrentFrame[1], 2);
-        updateSpriteFrame(2, spritesCurrentFrame[2], 4);
+        animateSprite(0, SPRITE_1_FULL_ANIM);
+        animateSprite(1, SPRITE_1_JUMP_ANIM);
+        animateSprite(2, SPRITE_1_FULL_ANIM);
     }
   } while (true);
 }
@@ -70,34 +69,34 @@ void initSprites() {
   // 1 block is 64 bytes
   char spriteBlockNumber = (char)((unsigned int)SPRITES / $40); // 0x0080
 
-  // TODO: calculate data position by sprite number and frames count
   spritesPointer[0] = spriteBlockNumber;
-  spritesPointer[1] = spriteBlockNumber + 2;
-  spritesPointer[2] = spriteBlockNumber + 4;
-
-  // // write block number on each sprite pointer
-  // // to show where are the data to the sprites
-  // for (int i = 0; i < numOfSprites; i++) {
-  //   spritesPointer[i] = spriteBlockNumber++;
-  // }
+  spritesPointer[1] = spriteBlockNumber;
+  spritesPointer[2] = spriteBlockNumber;
 }
 
-char getNextSpriteFrameBySpriteNumber(int spriteNumber) {
-    char currentFrame = spritesCurrentFrame[spriteNumber];
-    char framesCount = SPRITES_FRAMES_COUNT[spriteNumber];
+void animateSprite(int spriteNumber, int* animation) {
+  spritesCurrentFrame[spriteNumber] = getNextSpriteFrameBySpriteNumber(spriteNumber, animation);
+  updateSpriteFrame(spriteNumber, spritesCurrentFrame[spriteNumber], animation[0]);
+}
 
-    if (currentFrame == framesCount -1) {
+int getNextSpriteFrameBySpriteNumber(int spriteNumber, int* animation) {
+    int currentFrame = spritesCurrentFrame[spriteNumber];
+    int start = animation[0];
+    int stop = animation[1];
+    int framesCount = stop - start;
+
+    if (currentFrame >= framesCount) {
       return 0;
     }
 
     return currentFrame + 1;
 }
 
-void updateSpriteFrame(int spriteNumber, char spriteFrame, char spriteDataPosition) {
+void updateSpriteFrame(int spriteNumber, int spriteFrame, int spriteDataPosition) {
   char *spritesPointer = SCREEN_POINTER + $3f8; // 0x07F8
   char spriteBlockNumber = (char)((unsigned int)SPRITES / $40);
 
-  spritesPointer[spriteNumber] = spriteBlockNumber + spriteDataPosition + spriteFrame;
+  spritesPointer[spriteNumber] = spriteBlockNumber + (char)spriteDataPosition + (char)spriteFrame;
 }
 
 void initScreenByMap(char* map) {
@@ -113,7 +112,7 @@ void wait_vblank() {
     char oldRaster;
     do {
         oldRaster = VICII->RASTER;
-    } while (VICII->RASTER >= oldRaster);  // czekaj na nową ramkę
+    } while (VICII->RASTER >= oldRaster);
 }
 
 __address(SPRITE_ADDRESS) char SPRITES[] = kickasm(resource "data/Sprites.bin") {{
