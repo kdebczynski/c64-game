@@ -1,8 +1,8 @@
 #include <c64.h>
 
-char *const SCREEN_POINTER = (char *)$0400;       // Pointer to screen data
+char *const SCREEN_POINTER = (char *)$0400;       // Pointer to screen
 char *const SPRITE_POINTER_DATA = (char *)$2800;  // Pointer to sprite data
-char *const CHARSET_POITER = (char *)$2000;
+char *const CHARSET_POINTER_DATA = (char *)$2000;       // Pointer to chars data
 
 const int MAX_CHARS = 4;
 
@@ -17,7 +17,7 @@ void main() {
 }
 
 void initialize() {
-  VICII->MEMORY = toD018(SCREEN_POINTER, CHARSET_POITER);
+  VICII->MEMORY = toD018(SCREEN_POINTER, CHARSET_POINTER_DATA);
   VICII->SPRITES_ENABLE = %00000111;
 
   clearScreen();
@@ -79,7 +79,7 @@ void clearScreen() {
 
 void initChars() {
   for (int i = 0; i < MAX_CHARS*8; i++) {
-    CHARSET_POITER[i] = tiles[i];
+    CHARSET_POINTER_DATA[i] = tiles[i];
   }
 }
 
@@ -121,17 +121,53 @@ char tiles[MAX_CHARS*8] = {
   %10000001,
 };
 
-char SPRITE_1[64] = kickasm(resource "data/Sprites.bin") {{
-    .var sprite = LoadBinary("Sprites.bin")
-    .fill sprite.getSize(), sprite.get(i)
-}};
+char SPRITE_1[64] = {
+  0b00000000, 0b00011000, 0b00000000,
+  0b00000000, 0b00111100, 0b00000000,
+  0b00000000, 0b01111110, 0b00000000,
+  0b00000000, 0b11111111, 0b00000000,
+  0b00000001, 0b11111111, 0b10000000,
+  0b00000011, 0b11111111, 0b11000000,
+  0b00000111, 0b11111111, 0b11100000,
+  0b00001111, 0b11111111, 0b11110000,
+  0b00011111, 0b11111111, 0b11111000,
+  0b00011111, 0b01111110, 0b11111000,
+  0b00011110, 0b00111100, 0b01111000,
+  0b00001100, 0b00011000, 0b00110000,
+  0b00001100, 0b00000000, 0b00110000,
+  0b00000110, 0b00000000, 0b01100000,
+  0b00000011, 0b00000000, 0b11000000,
+  0b00000001, 0b10000001, 0b10000000,
+  0b00000000, 0b11111111, 0b00000000,
+  0b00000000, 0b01111110, 0b00000000,
+  0b00000000, 0b00111100, 0b00000000,
+  0b00000000, 0b00011000, 0b00000000,
+  0b00000000, 0b00000000, 0b00000000
+};
 
-char SPRITE_2[64] = kickasm(resource "data/balloon.png") {{
-    .var pic = LoadPicture("balloon.png", List().add($000000, $ffffff))
-    .for (var y=0; y<21; y++)
-        .for (var x=0;x<3; x++)
-            .byte pic.getSinglecolorByte(x,y)
-}};
+char SPRITE_2[64] = {
+  0b00000000, 0b01111110, 0b00000000,
+  0b00000001, 0b11111111, 0b10000000,
+  0b00000011, 0b11111111, 0b11000000,
+  0b00000111, 0b11000111, 0b11100000,
+  0b00001111, 0b10000011, 0b11110000,
+  0b00011111, 0b00000001, 0b11111000,
+  0b00011110, 0b00000000, 0b11111000,
+  0b00111110, 0b00000000, 0b11111100,
+  0b00111100, 0b00000000, 0b01111100,
+  0b00111000, 0b00000000, 0b00111100,
+  0b01111000, 0b00000000, 0b00111110,
+  0b01110000, 0b00000000, 0b00011110,
+  0b01110000, 0b00000000, 0b00011110,
+  0b01100000, 0b00000000, 0b00001110,
+  0b01100000, 0b00000000, 0b00001110,
+  0b01100000, 0b00000000, 0b00001110,
+  0b00100000, 0b00000000, 0b00001000,
+  0b00100000, 0b00000000, 0b00001000,
+  0b00000000, 0b00000000, 0b00000000,
+  0b00000000, 0b00000000, 0b00000000,
+  0b00000000, 0b00000000, 0b00000000
+};
 
 char SPRITE_3[64] = {
   0b00000000, 0b00011000, 0b00000000,
